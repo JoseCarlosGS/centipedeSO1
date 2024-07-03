@@ -16,17 +16,25 @@ class PCB:
 
 class cola:
     def __init__(self):
-        self.len = 0
-        end = 0
         self.lista = []
         
     def meter(self, elemento):
         self.lista.append(elemento)
-        self.len += 1
         
     def sacar(self):
         return self.lista.pop(0)
-        self.len -= 1
-
-    def longitud(self):
-        return self.len
+  
+    def first(self):
+        return self.lista[0]
+    
+    def __iter__(self):
+        self._indice = 0  # Reiniciar el índice al comienzo de la iteración
+        return self
+    
+    def __next__(self):
+        if self._indice < len(self.lista):
+            resultado = self.lista[self._indice]
+            self._indice += 1
+            return resultado
+        else:
+            raise StopIteration
