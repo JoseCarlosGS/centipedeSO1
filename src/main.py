@@ -40,6 +40,10 @@ free_pcb_indices = list(range(pool_size))
 
 #inicialiar variables
     # Configuración del cañón
+Clred = (255, 0, 0)
+Clyellow = (255, 255, 0)
+Clgreen = (0, 255, 0)
+
 ANCHO_CANON = 50
 ALTO_CANON = 20
 canon_color = (255, 0, 0)  # Rojo
@@ -123,6 +127,10 @@ Q.meter(body4)
 
 
 # Funciones
+def CambiarColor(objeto):
+    if objeto.Salud == 1:
+        objeto.Color = Clgreen
+        
 def obtener_pcb_del_pool():
     if free_pcb_indices:
         return free_pcb_indices.pop()
@@ -160,7 +168,8 @@ def moverNave(prun):
     
     prun.x -= vel
     prun.Hora = pygame.time.get_ticks()
-    Q.meter(prun)
+    if prun.Salud > 0:
+        Q.meter(prun)
 
 def moverBalaU(prun):
     #print('bala')
@@ -176,6 +185,7 @@ def moverBalaU(prun):
                         print("¡Colisión detectada con un objeto!")
                         prun.y = 0
                         gusano.Salud -= 1
+                        CambiarColor(gusano)
                         
     if prun.y > 0:
         #dibujar(prun)
