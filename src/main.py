@@ -6,9 +6,11 @@
 import pygame
 import sys
 import time
+import random as rd
 
 from cola import PCB, cola
 
+#Declaracion de variables globales
 canon = PCB()
 Q = cola()
 head = PCB()
@@ -16,12 +18,17 @@ body1 = PCB()
 body2 = PCB()
 body3 = PCB()
 body4 = PCB()
-RetardoCentipede = 5
+RetardoCentipede = 1
 id = 0
+Clred = (255, 0, 0)
+Clyellow = (255, 255, 0)
+Clgreen = (0, 255, 0)
+Clwhite = (255, 255, 255)
 
 #Tipos
 CENTIPEDE = 0
 BALA = 1
+OBSTACULO = 2
 
 # Inicializar Pygame
 pygame.init()
@@ -38,12 +45,10 @@ pool_size = 200  # Ajustar según sea necesario
 pcb_pool = [PCB() for _ in range(pool_size)]
 free_pcb_indices = list(range(pool_size))
 
-#inicialiar variables
-    # Configuración del cañón
-Clred = (255, 0, 0)
-Clyellow = (255, 255, 0)
-Clgreen = (0, 255, 0)
+   
 
+
+# Configuración del cañón   
 ANCHO_CANON = 50
 ALTO_CANON = 20
 canon_color = (255, 0, 0)  # Rojo
@@ -59,7 +64,7 @@ canon.Color = canon_color
 
 #head del cienpies
 head.Tipo = CENTIPEDE
-head.Ancho= 30
+head.Ancho= 20
 head.Alto  = 20
 head.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2
 head.y = 10
@@ -69,11 +74,11 @@ head.Retardo = RetardoCentipede
 head.Dir = 0 
 Q.meter(head)
 
-#Cuerpo del cienpiez
+#Cuerpo del cienpies
 body1.Tipo = CENTIPEDE
-body1.Ancho= 30
+body1.Ancho= 20
 body1.Alto  = 20
-body1.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 20
+body1.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 40
 body1.y = 10
 body1.Color = canon_color
 body1.Hora = pygame.time.get_ticks()
@@ -82,9 +87,9 @@ body1.Dir = 0
 Q.meter(body1)
 
 body2.Tipo = CENTIPEDE
-body2.Ancho= 30
+body2.Ancho= 20
 body2.Alto  = 20
-body2.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 40
+body2.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 80
 body2.y = 10
 body2.Color = canon_color
 body2.Hora = pygame.time.get_ticks()
@@ -93,9 +98,9 @@ body2.Dir = 0
 Q.meter(body2)
 
 body3.Tipo = CENTIPEDE
-body3.Ancho= 30
+body3.Ancho= 20
 body3.Alto  = 20
-body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 60
+body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 120
 body3.y = 10
 body3.Color = canon_color
 body3.Hora = pygame.time.get_ticks()
@@ -104,9 +109,9 @@ body3.Dir = 0
 Q.meter(body3)
 
 body4.Tipo = CENTIPEDE
-body4.Ancho= 30
+body4.Ancho= 20
 body4.Alto  = 20
-body4.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 80
+body4.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 160
 body4.y = 10
 body4.Color = canon_color
 body4.Hora = pygame.time.get_ticks()
@@ -124,7 +129,16 @@ Q.meter(body4)
 # body3.Retardo = 30
 # body3.Dir = 0 
 # Q.meter(body3)
-
+obstaculos = [PCB() for _ in range(20)]
+for obstaculo in obstaculos:
+    obstaculo.Color = Clwhite
+    obstaculo.Alto = head.Alto
+    obstaculo.Ancho = head.Ancho
+    obstaculo.x = rd.randint(0,500)
+    obstaculo.y = rd.choice(range(10, 500 + 1, 20))
+    obstaculo.Salud = 4
+    obstaculo.Tipo = OBSTACULO
+    #print(obstaculo)
 
 # Funciones
 def CambiarColor(objeto):
@@ -161,6 +175,16 @@ def moverNave(prun):
     elif prun.x > ANCHO_PANTALLA - prun.Ancho:
         cambiarDir(prun)
         prun.y = prun.y + prun.Alto
+    
+    # Detectar choque con obstaculos
+    rect_gus = crear_rect(prun)
+    for obstaculo in obstaculos:
+        rect_objeto = crear_rect(obstaculo)
+        if rect_gus.colliderect(rect_objeto):
+            #print("¡Colisión detectada con un objeto!")
+            cambiarDir(prun)
+            prun.y = prun.y + prun.Alto
+    
     if prun.Dir == 0:
         vel = 10
     elif prun.Dir == 1:
@@ -168,24 +192,39 @@ def moverNave(prun):
     
     prun.x -= vel
     prun.Hora = pygame.time.get_ticks()
+    #print(prun.Hora)
     if prun.Salud > 0:
         Q.meter(prun)
+    else:
+        nobstaculo = PCB()
+        nobstaculo = prun
+        nobstaculo.Salud = 4
+        nobstaculo.Tipo = OBSTACULO
+        obstaculos.append(nobstaculo)
+        
 
 def moverBalaU(prun):
     #print('bala')
     #print(f'Moviendo bala U: {prun}')
-    prun.y = prun.y -10
-    # Detectar colision
-    if prun.Tipo == BALA:
-            rect_bala = crear_rect(prun)
-            for gusano in Q:
-                if gusano.Tipo != BALA:
-                    rect_objeto = crear_rect(gusano)
-                    if rect_bala.colliderect(rect_objeto):
-                        print("¡Colisión detectada con un objeto!")
-                        prun.y = 0
-                        gusano.Salud -= 1
-                        CambiarColor(gusano)
+    prun.y = prun.y -15
+    # Detectar colision con el cienpies
+    rect_bala = crear_rect(prun)
+    for gusano in Q:
+        if gusano.Tipo != BALA:
+            rect_objeto = crear_rect(gusano)
+            if rect_bala.colliderect(rect_objeto):
+                print("¡Colisión detectada con un objeto!")
+                prun.y = 0
+                gusano.Salud -= 1
+                CambiarColor(gusano)
+                
+    # Detectar colision con obstaculos
+    for obstaculo in obstaculos:
+        rect_objeto = crear_rect(obstaculo)
+        if rect_bala.colliderect(rect_objeto):
+            #print("¡Colisión detectada con un objeto!")
+            prun.y = 0
+            obstaculo.Salud -= 1
                         
     if prun.y > 0:
         #dibujar(prun)
@@ -209,7 +248,7 @@ def crearBala():
     BalaUser.Color = (255, 0, 0)  # Rojo
     BalaUser.x = (canon.Ancho - BalaUser.Ancho) // 2 + canon.x
     BalaUser.y = canon.y - BalaUser.Alto
-    BalaUser.Retardo = 5
+    BalaUser.Retardo = 1
     #BalaUser.Hora = HoraAbs
     BalaUser.Hora = pygame.time.get_ticks()
     dibujar(BalaUser)
@@ -235,6 +274,7 @@ def planificador():
         print(PRUN.Hora + PRUN.Retardo)
     else:
         #print('----')
+        
         if PRUN.Tipo == CENTIPEDE:
             moverNave(PRUN)
         elif PRUN.Tipo == BALA:
@@ -243,6 +283,7 @@ def planificador():
             moverBalaN(PRUN)
 
 # Bucle principal del juego
+
 corriendo = True
 sw = True
 while corriendo:
@@ -269,6 +310,11 @@ while corriendo:
         dibujar(dibujo)
     
     #dibujar(Q.first())
+    for obstaculo in obstaculos:
+        if obstaculo.Salud > 0:
+            dibujar(obstaculo)
+        else:
+            obstaculos.remove(obstaculo)
 
     
     #Ejecutar planificador
