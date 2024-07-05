@@ -132,7 +132,11 @@ def obtener_pcb_del_pool():
 def devolver_pcb_al_pool(indice):
     free_pcb_indices.append(indice)
     
+def crear_rect(objeto):
+    return pygame.Rect(objeto.x, objeto.y, objeto.Ancho, objeto.Alto)
+
 def dibujar(objeto):
+    # Detección de colisión para la bala con cualquier otro objeto
     pygame.draw.rect(pantalla, objeto.Color, (objeto.x, objeto.y, objeto.Ancho, objeto.Alto))
     
 def cambiarDir(objeto):
@@ -162,6 +166,17 @@ def moverBalaU(prun):
     #print('bala')
     #print(f'Moviendo bala U: {prun}')
     prun.y = prun.y -10
+    # Detectar colision
+    if prun.Tipo == BALA:
+            rect_bala = crear_rect(prun)
+            for gusano in Q:
+                if gusano.Tipo != BALA:
+                    rect_objeto = crear_rect(gusano)
+                    if rect_bala.colliderect(rect_objeto):
+                        print("¡Colisión detectada con un objeto!")
+                        prun.y = 0
+                        gusano.Salud -= 1
+                        
     if prun.y > 0:
         #dibujar(prun)
         prun.Hora = pygame.time.get_ticks()
@@ -235,7 +250,7 @@ while corriendo:
     if teclas[pygame.K_RIGHT] and canon.x < ANCHO_PANTALLA - ANCHO_CANON:
         canon.x += velocidad
         
-
+    
     # Dibujar en la pantalla
     pantalla.fill((0, 0, 0))  # Limpiar la pantalla con color negro
     dibujar(canon)

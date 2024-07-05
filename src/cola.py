@@ -13,6 +13,7 @@ class PCB:
     Color: Optional[int] = field(default=None)
     Hora: Optional[int] = field(default=None)
     Retardo: Optional[int] = field(default=None)
+    Salud: Optional[int] = field(default=2)
 
 class cola:
     def __init__(self):
