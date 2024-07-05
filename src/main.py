@@ -24,6 +24,9 @@ Clred = (255, 0, 0)
 Clyellow = (255, 255, 0)
 Clgreen = (0, 255, 0)
 Clwhite = (255, 255, 255)
+# Configurar la fuente
+
+Score = 0
 
 #Tipos
 CENTIPEDE = 0
@@ -32,6 +35,8 @@ OBSTACULO = 2
 
 # Inicializar Pygame
 pygame.init()
+pygame.font.init()
+font = pygame.font.SysFont(None, 32)
 
 # Configuración de la pantalla
 ANCHO_PANTALLA = 800
@@ -44,10 +49,9 @@ pygame.display.set_caption("Juego de Cañón Sencillo")
 pool_size = 200  # Ajustar según sea necesario
 pcb_pool = [PCB() for _ in range(pool_size)]
 free_pcb_indices = list(range(pool_size))
+obstaculos = [PCB() for _ in range(20)]
 
    
-
-
 # Configuración del cañón   
 ANCHO_CANON = 50
 ALTO_CANON = 20
@@ -62,83 +66,84 @@ canon.Alto = ALTO_CANON
 canon.Ancho = ANCHO_CANON
 canon.Color = canon_color 
 
-#head del cienpies
-head.Tipo = CENTIPEDE
-head.Ancho= 20
-head.Alto  = 20
-head.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2
-head.y = 10
-head.Color = canon_color
-head.Hora = pygame.time.get_ticks()
-head.Retardo = RetardoCentipede
-head.Dir = 0 
-Q.meter(head)
+def start():
+    global head, body1, body2, body3, body4
+    #head del cienpies
+    head.Tipo = CENTIPEDE
+    head.Ancho= 20
+    head.Alto  = 20
+    head.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2
+    head.y = 10
+    head.Color = canon_color
+    head.Hora = pygame.time.get_ticks()
+    head.Retardo = RetardoCentipede
+    head.Dir = 0 
+    head.Salud = 2
+    Q.meter(head)
 
-#Cuerpo del cienpies
-body1.Tipo = CENTIPEDE
-body1.Ancho= 20
-body1.Alto  = 20
-body1.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 40
-body1.y = 10
-body1.Color = canon_color
-body1.Hora = pygame.time.get_ticks()
-body1.Retardo = RetardoCentipede
-body1.Dir = 0 
-Q.meter(body1)
+    #Cuerpo del cienpies
+    body1.Tipo = CENTIPEDE
+    body1.Ancho= 20
+    body1.Alto  = 20
+    body1.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 40
+    body1.y = 10
+    body1.Color = canon_color
+    body1.Hora = pygame.time.get_ticks()
+    body1.Retardo = RetardoCentipede
+    body1.Dir = 0 
+    body1.Salud = 2
+    Q.meter(body1)
 
-body2.Tipo = CENTIPEDE
-body2.Ancho= 20
-body2.Alto  = 20
-body2.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 80
-body2.y = 10
-body2.Color = canon_color
-body2.Hora = pygame.time.get_ticks()
-body2.Retardo = RetardoCentipede
-body2.Dir = 0            
-Q.meter(body2)
+    body2.Tipo = CENTIPEDE
+    body2.Ancho= 20
+    body2.Alto  = 20
+    body2.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 80
+    body2.y = 10
+    body2.Color = canon_color
+    body2.Hora = pygame.time.get_ticks()
+    body2.Retardo = RetardoCentipede
+    body2.Dir = 0  
+    body2.Salud = 2          
+    Q.meter(body2)
 
-body3.Tipo = CENTIPEDE
-body3.Ancho= 20
-body3.Alto  = 20
-body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 120
-body3.y = 10
-body3.Color = canon_color
-body3.Hora = pygame.time.get_ticks()
-body3.Retardo = RetardoCentipede
-body3.Dir = 0 
-Q.meter(body3)
+    body3.Tipo = CENTIPEDE
+    body3.Ancho= 20
+    body3.Alto  = 20
+    body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 120
+    body3.y = 10
+    body3.Color = canon_color
+    body3.Hora = pygame.time.get_ticks()
+    body3.Retardo = RetardoCentipede
+    body3.Dir = 0 
+    body3.Salud = 2
+    Q.meter(body3)
 
-body4.Tipo = CENTIPEDE
-body4.Ancho= 20
-body4.Alto  = 20
-body4.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 160
-body4.y = 10
-body4.Color = canon_color
-body4.Hora = pygame.time.get_ticks()
-body4.Retardo = RetardoCentipede
-body4.Dir = 0            
-Q.meter(body4)
+    body4.Tipo = CENTIPEDE
+    body4.Ancho= 20
+    body4.Alto  = 20
+    body4.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 160
+    body4.y = 10
+    body4.Color = canon_color
+    body4.Hora = pygame.time.get_ticks()
+    body4.Retardo = RetardoCentipede
+    body4.Dir = 0 
+    body4.Salud = 2           
+    Q.meter(body4)
+    
 
-# body3.Tipo = CENTIPEDE
-# body3.Ancho= 20
-# body3.Alto  = 20
-# body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 60
-# body3.y = 10
-# body3.Color = canon_color
-# body3.Hora = int(time.time() * 1000)
-# body3.Retardo = 30
-# body3.Dir = 0 
-# Q.meter(body3)
-obstaculos = [PCB() for _ in range(20)]
-for obstaculo in obstaculos:
-    obstaculo.Color = Clwhite
-    obstaculo.Alto = head.Alto
-    obstaculo.Ancho = head.Ancho
-    obstaculo.x = rd.randint(0,500)
-    obstaculo.y = rd.choice(range(10, 500 + 1, 20))
-    obstaculo.Salud = 4
-    obstaculo.Tipo = OBSTACULO
-    #print(obstaculo)
+    for obstaculo in obstaculos:
+        obstaculo.Color = Clwhite
+        obstaculo.Alto = head.Alto
+        obstaculo.Ancho = head.Ancho
+        obstaculo.x = rd.randint(0,500)
+        obstaculo.y = rd.choice(range(10, 500 + 1, 20))
+        obstaculo.Salud = 4
+        obstaculo.Tipo = OBSTACULO
+
+    
+
+start()
+
 
 # Funciones
 def CambiarColor(objeto):
@@ -161,6 +166,10 @@ def dibujar(objeto):
     # Detección de colisión para la bala con cualquier otro objeto
     pygame.draw.rect(pantalla, objeto.Color, (objeto.x, objeto.y, objeto.Ancho, objeto.Alto))
     
+# Función para renderizar texto
+def render_text(text, font, color):
+    return font.render(text, True, color)
+    
 def cambiarDir(objeto):
     if objeto.Dir == 0:
         objeto.Dir = 1
@@ -168,6 +177,7 @@ def cambiarDir(objeto):
         objeto.Dir = 0
 
 def moverNave(prun):
+    global Score
     #print('centipede')
     if prun.x < 0:
         cambiarDir(prun)
@@ -201,9 +211,11 @@ def moverNave(prun):
         nobstaculo.Salud = 4
         nobstaculo.Tipo = OBSTACULO
         obstaculos.append(nobstaculo)
+        Score += 100
         
 
 def moverBalaU(prun):
+    global Score
     #print('bala')
     #print(f'Moviendo bala U: {prun}')
     prun.y = prun.y -15
@@ -217,6 +229,7 @@ def moverBalaU(prun):
                 prun.y = 0
                 gusano.Salud -= 1
                 CambiarColor(gusano)
+                Score += 10
                 
     # Detectar colision con obstaculos
     for obstaculo in obstaculos:
@@ -259,11 +272,15 @@ def crearBala():
     
     
 def planificador():
+    global obstaculos
     PRUN = Q.sacar()
     #print(PRUN)
     if PRUN is None:
+        print('nuevo')
+        obstaculos = [PCB() for _ in range(20)]
+        start()
         return
-
+        
     current_time_ms = pygame.time.get_ticks()
     #current_time_ms = int(time.time() * 1000)  # Convertir tiempo a milisegundos
 
@@ -285,6 +302,7 @@ def planificador():
 # Bucle principal del juego
 
 corriendo = True
+
 sw = True
 while corriendo:
     for evento in pygame.event.get():
@@ -300,7 +318,10 @@ while corriendo:
         canon.x -= velocidad
     if teclas[pygame.K_RIGHT] and canon.x < ANCHO_PANTALLA - ANCHO_CANON:
         canon.x += velocidad
-        
+    
+    # Actualizar el texto dinámico continuamente
+    elapsed_time = int(time.time() - time.time())
+    ScoreText = f"Score: {Score} "    
     
     # Dibujar en la pantalla
     pantalla.fill((0, 0, 0))  # Limpiar la pantalla con color negro
@@ -320,6 +341,11 @@ while corriendo:
     #Ejecutar planificador
     planificador()
     # print(Q.last())
+    
+        # Renderizar el texto dinámico
+    texto_superficie = render_text(ScoreText, font, Clwhite)
+    texto_rect = texto_superficie.get_rect(center=(700, 10))
+    pantalla.blit(texto_superficie, texto_rect)
     
     # Actualizar la pantalla
     pygame.display.flip()

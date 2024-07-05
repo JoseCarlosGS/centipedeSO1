@@ -23,7 +23,10 @@ class cola:
         self.lista.append(elemento)
         
     def sacar(self):
-        return self.lista.pop(0)
+        if len(self.lista) > 0:
+            return self.lista.pop(0)
+        else:
+            return None
   
     def first(self):
         return self.lista[0]
