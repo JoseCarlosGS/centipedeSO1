@@ -14,6 +14,7 @@ class PCB:
     Hora: Optional[int] = field(default=None)
     Retardo: Optional[int] = field(default=None)
     Salud: Optional[int] = field(default=2)
+    is_body: Optional[bool] = field(default=False)
 
 class cola:
     def __init__(self):

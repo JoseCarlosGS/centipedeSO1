@@ -25,18 +25,21 @@ Clyellow = (255, 255, 0)
 Clgreen = (0, 255, 0)
 Clwhite = (255, 255, 255)
 # Configurar la fuente
-
+framesCentipede = []
 Score = 0
 
 #Tipos
 CENTIPEDE = 0
 BALA = 1
 OBSTACULO = 2
+CANON = 3
 
 # Inicializar Pygame
 pygame.init()
 pygame.font.init()
 font = pygame.font.SysFont(None, 32)
+# Inicializar el módulo de sonido
+pygame.mixer.init()
 
 # Configuración de la pantalla
 ANCHO_PANTALLA = 800
@@ -51,13 +54,74 @@ pcb_pool = [PCB() for _ in range(pool_size)]
 free_pcb_indices = list(range(pool_size))
 obstaculos = [PCB() for _ in range(20)]
 
+###-----------------------------------Carga de recursos------------------------------------------------------------##
+#Imagenes
+img_canon_org = pygame.image.load('img/cannon.png')
+img_canon = pygame.transform.scale(img_canon_org, (30, 30))
+img_obs_org = pygame.image.load('img/obstaculo.png')
+img_obs = pygame.transform.scale(img_obs_org, (20, 20))
+
+#Frames de animacion
+img_head0_org = pygame.image.load('img/head_0.png')
+img_head0 = pygame.transform.scale(img_head0_org, (20, 20))
+img_head0_inv = pygame.transform.flip(img_head0, True, False)
+
+img_head2_org = pygame.image.load('img/head_2.png')
+img_head2 = pygame.transform.scale(img_head2_org, (20, 20))
+img_head2_inv = pygame.transform.flip(img_head2, True, False)
+
+img_head3_org = pygame.image.load('img/head_3.png')
+img_head3 = pygame.transform.scale(img_head3_org, (20, 20))
+img_head3_inv = pygame.transform.flip(img_head3, True, False)
+
+img_head4_org = pygame.image.load('img/head_4.png')
+img_head4 = pygame.transform.scale(img_head4_org, (20, 20))
+img_head4_inv = pygame.transform.flip(img_head4, True, False)
+ 
+img_head6_org = pygame.image.load('img/head_6.png')
+img_head6 = pygame.transform.scale(img_head6_org, (20, 20))
+img_head6_inv = pygame.transform.flip(img_head6, True, False)
+
+framehead = [img_head0, img_head2, img_head3, img_head4, img_head6, img_head4, img_head3, img_head2, img_head0]
+frameheadInv = [img_head0_inv, img_head2_inv, img_head3_inv, img_head4_inv, img_head6_inv, img_head4_inv, 
+                img_head3_inv, img_head2_inv, img_head0_inv]
    
+img_body2_org = pygame.image.load('img/body_2.png')
+img_body2 = pygame.transform.scale(img_body2_org, (20, 20))
+img_body2_inv = pygame.transform.flip(img_body2, True, False)
+
+img_body3_org = pygame.image.load('img/body_3.png')
+img_body3 = pygame.transform.scale(img_body3_org, (20, 20))
+img_body3_inv = pygame.transform.flip(img_body3, True, False)
+
+img_body4_org = pygame.image.load('img/body_4.png')
+img_body4 = pygame.transform.scale(img_body4_org, (20, 20))
+img_body4_inv = pygame.transform.flip(img_body4, True, False)
+
+img_body6_org = pygame.image.load('img/body_6.png')
+img_body6 = pygame.transform.scale(img_body6_org, (20, 20))
+img_body6_inv = pygame.transform.flip(img_body6, True, False)
+
+img_body7_org = pygame.image.load('img/body_7.png')
+img_body7 = pygame.transform.scale(img_body7_org, (20, 20))
+img_body7_inv = pygame.transform.flip(img_body7, True, False)
+
+framebody = [img_body2, img_body3, img_body4, img_body6, img_body7, img_body6, img_body4, img_body3, img_body2]
+framebodyInv = [img_body2_inv, img_body3_inv, img_body4_inv, img_body6_inv, img_body7_inv
+                , img_body6_inv, img_body4_inv, img_body3_inv, img_body2_inv]
+
+# Efectos de sonido
+sonido_disparo = pygame.mixer.Sound('sound/laserSmall_002.ogg')
+sonido_slime = pygame.mixer.Sound('sound/slime_000.ogg')
+sonido_impact_obj = pygame.mixer.Sound('sound/impact_obj.wav')
+
+
 # Configuración del cañón   
-ANCHO_CANON = 50
-ALTO_CANON = 20
+ANCHO_CANON = 12
+ALTO_CANON = 12
 canon_color = (255, 0, 0)  # Rojo
 canon_pos_x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2
-canon_pos_y = ALTO_PANTALLA - ALTO_CANON - 10
+canon_pos_y = ALTO_PANTALLA - ALTO_CANON - 15
 velocidad = 5
 
 canon.x = canon_pos_x
@@ -65,6 +129,7 @@ canon.y = canon_pos_y
 canon.Alto = ALTO_CANON
 canon.Ancho = ANCHO_CANON
 canon.Color = canon_color 
+canon.Tipo = CANON
 
 def start():
     global head, body1, body2, body3, body4
@@ -85,49 +150,53 @@ def start():
     body1.Tipo = CENTIPEDE
     body1.Ancho= 20
     body1.Alto  = 20
-    body1.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 40
+    body1.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 20
     body1.y = 10
     body1.Color = canon_color
     body1.Hora = pygame.time.get_ticks()
     body1.Retardo = RetardoCentipede
     body1.Dir = 0 
     body1.Salud = 2
+    body1.is_body = True
     Q.meter(body1)
 
     body2.Tipo = CENTIPEDE
     body2.Ancho= 20
     body2.Alto  = 20
-    body2.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 80
+    body2.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 40
     body2.y = 10
     body2.Color = canon_color
     body2.Hora = pygame.time.get_ticks()
     body2.Retardo = RetardoCentipede
     body2.Dir = 0  
-    body2.Salud = 2          
+    body2.Salud = 2
+    body2.is_body = True          
     Q.meter(body2)
 
     body3.Tipo = CENTIPEDE
     body3.Ancho= 20
     body3.Alto  = 20
-    body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 120
+    body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 60
     body3.y = 10
     body3.Color = canon_color
     body3.Hora = pygame.time.get_ticks()
     body3.Retardo = RetardoCentipede
     body3.Dir = 0 
     body3.Salud = 2
+    body3.is_body = True
     Q.meter(body3)
 
     body4.Tipo = CENTIPEDE
     body4.Ancho= 20
     body4.Alto  = 20
-    body4.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 160
+    body4.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 80
     body4.y = 10
     body4.Color = canon_color
     body4.Hora = pygame.time.get_ticks()
     body4.Retardo = RetardoCentipede
     body4.Dir = 0 
-    body4.Salud = 2           
+    body4.Salud = 2  
+    body4.is_body = True         
     Q.meter(body4)
     
 
@@ -135,7 +204,7 @@ def start():
         obstaculo.Color = Clwhite
         obstaculo.Alto = head.Alto
         obstaculo.Ancho = head.Ancho
-        obstaculo.x = rd.randint(0,500)
+        obstaculo.x = rd.choice(range(30, 780 + 1, 20))
         obstaculo.y = rd.choice(range(10, 500 + 1, 20))
         obstaculo.Salud = 4
         obstaculo.Tipo = OBSTACULO
@@ -165,6 +234,32 @@ def crear_rect(objeto):
 def dibujar(objeto):
     # Detección de colisión para la bala con cualquier otro objeto
     pygame.draw.rect(pantalla, objeto.Color, (objeto.x, objeto.y, objeto.Ancho, objeto.Alto))
+    # Dibujar la imagen en la pantalla
+    rect_obj = crear_rect(objeto)
+    if objeto.Tipo == CANON:   
+        pantalla.blit(img_canon, rect_obj)
+    elif objeto.Tipo == OBSTACULO:
+        pantalla.blit(img_obs, rect_obj)
+    elif objeto.Tipo == CENTIPEDE:
+        if objeto.is_body:
+            if objeto.Dir == 0:
+                img = framebody.pop(0)
+                pantalla.blit(img, rect_obj)
+                framebody.append(img)
+            else:
+                img = framebodyInv.pop(0)
+                pantalla.blit(img, rect_obj)
+                framebodyInv.append(img)
+        else:
+            if objeto.Dir == 0:
+                img = framehead.pop(0)
+                pantalla.blit(img, rect_obj)
+                framehead.append(img)
+            else:
+                img = frameheadInv.pop(0)
+                pantalla.blit(img, rect_obj)
+                frameheadInv.append(img)
+            
     
 # Función para renderizar texto
 def render_text(text, font, color):
@@ -212,6 +307,10 @@ def moverNave(prun):
         nobstaculo.Tipo = OBSTACULO
         obstaculos.append(nobstaculo)
         Score += 100
+        camb = Q.sacar()
+        camb.is_body = False
+        Q.meter(camb)
+        sonido_slime.play()
         
 
 def moverBalaU(prun):
@@ -238,6 +337,7 @@ def moverBalaU(prun):
             #print("¡Colisión detectada con un objeto!")
             prun.y = 0
             obstaculo.Salud -= 1
+            sonido_impact_obj.play()
                         
     if prun.y > 0:
         #dibujar(prun)
@@ -256,8 +356,8 @@ def crearBala():
     BalaUser = pcb_pool[indice_pcb]
     BalaUser.PID = id
     BalaUser.Tipo  = BALA
-    BalaUser.Ancho = 5
-    BalaUser.Alto  = 10
+    BalaUser.Ancho = 2
+    BalaUser.Alto  = 15
     BalaUser.Color = (255, 0, 0)  # Rojo
     BalaUser.x = (canon.Ancho - BalaUser.Ancho) // 2 + canon.x
     BalaUser.y = canon.y - BalaUser.Alto
@@ -265,6 +365,7 @@ def crearBala():
     #BalaUser.Hora = HoraAbs
     BalaUser.Hora = pygame.time.get_ticks()
     dibujar(BalaUser)
+    sonido_disparo.play()
 
     Q.meter(BalaUser)
     id += 1             
