@@ -1,5 +1,5 @@
 """Nombre: ProyectoSO1
-    Autor: Jose Carlos Giron Solano
+    Autor: Jose Carlos Giron Solano 
     Año: 2024
     """
 
@@ -61,7 +61,7 @@ pcb_pool = [PCB() for _ in range(pool_size)]
 free_pcb_indices = list(range(pool_size))
 obstaculos = [PCB() for _ in range(20)]
 lvidas = [PCB() for _ in range(Vidas)]
-bodys = [PCB() for _ in range(4)]
+bodys = [PCB() for _ in range(3)]
 
 ###-----------------------------------Carga de recursos------------------------------------------------------------##
 
@@ -448,7 +448,7 @@ def moverNave(prun):
         obstaculos.append(nobstaculo)
         Score += 100
         i = 0
-        while i <= Q.long():
+        while i <= Q.long()-1:
             elem = Q.pos(i)
             if elem.Tipo == CENTIPEDE:   
                 elem.is_body = False
@@ -521,7 +521,8 @@ def crearBala():
     if indice_pcb is None:
         print("No hay PCBs disponibles en el pool")
         return
-    BalaUser = pcb_pool[indice_pcb]
+    #BalaUser = pcb_pool[indice_pcb]
+    BalaUser = PCB()
     BalaUser.PID = id
     BalaUser.Tipo  = BALA
     BalaUser.Ancho = 2
