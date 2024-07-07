@@ -24,9 +24,9 @@ Clred = (255, 0, 0)
 Clyellow = (255, 255, 0)
 Clgreen = (0, 255, 0)
 Clwhite = (255, 255, 255)
-# Configurar la fuente
 framesCentipede = []
 Score = 0
+Vidas = 4
 
 #Tipos
 CENTIPEDE = 0
@@ -58,10 +58,21 @@ obstaculos = [PCB() for _ in range(20)]
 #Imagenes
 img_canon_org = pygame.image.load('img/cannon.png')
 img_canon = pygame.transform.scale(img_canon_org, (30, 30))
+
+
+#Frames de animacion
 img_obs_org = pygame.image.load('img/obstaculo.png')
 img_obs = pygame.transform.scale(img_obs_org, (20, 20))
 
-#Frames de animacion
+img_obs1_org = pygame.image.load('img/obstaculo_1.png')
+img_obs1 = pygame.transform.scale(img_obs1_org, (20, 20))
+
+img_obs2_org = pygame.image.load('img/obstaculo_2.png')
+img_obs2 = pygame.transform.scale(img_obs2_org, (20, 20))
+
+img_obs3_org = pygame.image.load('img/obstaculo_3.png')
+img_obs3 = pygame.transform.scale(img_obs3_org, (20, 20))
+
 img_head0_org = pygame.image.load('img/head_0.png')
 img_head0 = pygame.transform.scale(img_head0_org, (20, 20))
 img_head0_inv = pygame.transform.flip(img_head0, True, False)
@@ -114,6 +125,7 @@ framebodyInv = [img_body2_inv, img_body3_inv, img_body4_inv, img_body6_inv, img_
 sonido_disparo = pygame.mixer.Sound('sound/laserSmall_002.ogg')
 sonido_slime = pygame.mixer.Sound('sound/slime_000.ogg')
 sonido_impact_obj = pygame.mixer.Sound('sound/impact_obj.wav')
+sonido_explosion = pygame.mixer.Sound('sound/explosionCrunch_003.ogg')
 
 
 # Configuración del cañón   
@@ -238,8 +250,17 @@ def dibujar(objeto):
     rect_obj = crear_rect(objeto)
     if objeto.Tipo == CANON:   
         pantalla.blit(img_canon, rect_obj)
+        
     elif objeto.Tipo == OBSTACULO:
-        pantalla.blit(img_obs, rect_obj)
+        if objeto.Salud == 4:
+            pantalla.blit(img_obs, rect_obj)
+        if objeto.Salud == 3:
+            pantalla.blit(img_obs1, rect_obj)
+        if objeto.Salud == 2:
+            pantalla.blit(img_obs2, rect_obj)
+        if objeto.Salud == 1:
+            pantalla.blit(img_obs3, rect_obj)
+            
     elif objeto.Tipo == CENTIPEDE:
         if objeto.is_body:
             if objeto.Dir == 0:
@@ -272,8 +293,8 @@ def cambiarDir(objeto):
         objeto.Dir = 0
 
 def moverNave(prun):
-    global Score
-    #print('centipede')
+    global Score, Vidas
+    
     if prun.x < 0:
         cambiarDir(prun)
         prun.y = prun.y + prun.Alto
@@ -289,6 +310,17 @@ def moverNave(prun):
             #print("¡Colisión detectada con un objeto!")
             cambiarDir(prun)
             prun.y = prun.y + prun.Alto
+    
+    if rect_gus.colliderect(crear_rect(canon)):
+        if Vidas > 0:
+            sonido_explosion.play()
+            Vidas -= 1
+            print(Vidas)
+            for elemn in Q:
+                ele = Q.sacar()
+            return
+        else:
+            corriendo = False
     
     if prun.Dir == 0:
         vel = 10
@@ -315,9 +347,8 @@ def moverNave(prun):
 
 def moverBalaU(prun):
     global Score
-    #print('bala')
-    #print(f'Moviendo bala U: {prun}')
     prun.y = prun.y -15
+    
     # Detectar colision con el cienpies
     rect_bala = crear_rect(prun)
     for gusano in Q:
@@ -383,7 +414,6 @@ def planificador():
         return
         
     current_time_ms = pygame.time.get_ticks()
-    #current_time_ms = int(time.time() * 1000)  # Convertir tiempo a milisegundos
 
     if PRUN.Hora + PRUN.Retardo > current_time_ms:
         Q.meter(PRUN)
@@ -452,7 +482,7 @@ while corriendo:
     pygame.display.flip()
 
     # Control de la velocidad del juego
-    pygame.time.Clock().tick(100)
+    pygame.time.Clock().tick(260)
 
 # Salir de Pygame
 pygame.quit()
