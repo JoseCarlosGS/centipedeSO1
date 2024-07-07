@@ -60,7 +60,7 @@ pcb_pool = [PCB() for _ in range(pool_size)]
 free_pcb_indices = list(range(pool_size))
 obstaculos = [PCB() for _ in range(20)]
 lvidas = [PCB() for _ in range(Vidas)]
-bodys = [PCB() for _ in range(5)]
+bodys = [PCB() for _ in range(4)]
 
 ###-----------------------------------Carga de recursos------------------------------------------------------------##
 #Imagenes
@@ -150,19 +150,19 @@ framebodyInv = [img_body2_inv, img_body3_inv, img_body4_inv, img_body6_inv, img_
 
 # Misil frames
 img_misil0_org = pygame.image.load('img/frame_0.png')
-img_misil0 = pygame.transform.scale(img_misil0_org, (35, 40))
+img_misil0 = pygame.transform.scale(img_misil0_org, (10, 30))
 
 img_misil1_org = pygame.image.load('img/frame_1.png')
-img_misil1 = pygame.transform.scale(img_misil1_org, (35, 40))
+img_misil1 = pygame.transform.scale(img_misil1_org, (10, 30))
 
 img_misil2_org = pygame.image.load('img/frame_2.png')
-img_misil2 = pygame.transform.scale(img_misil2_org, (35, 40))
+img_misil2 = pygame.transform.scale(img_misil2_org, (10, 30))
 
 img_misil3_org = pygame.image.load('img/frame_3.png')
-img_misil3 = pygame.transform.scale(img_misil3_org, (35, 40))
+img_misil3 = pygame.transform.scale(img_misil3_org, (10, 30))
 
 img_misil0_org = pygame.image.load('img/frame_4.png')
-img_misil4 = pygame.transform.scale(img_misil0_org, (35, 40))
+img_misil4 = pygame.transform.scale(img_misil0_org, (10, 30))
 
 frameMisil = [img_misil0, img_misil1, img_misil2, img_misil3, img_misil4]
 
@@ -171,11 +171,20 @@ sonido_disparo = pygame.mixer.Sound('sound/laserSmall_002.ogg')
 sonido_slime = pygame.mixer.Sound('sound/slime_000.ogg')
 sonido_impact_obj = pygame.mixer.Sound('sound/impact_obj.wav')
 sonido_explosion = pygame.mixer.Sound('sound/explosionCrunch_003.ogg')
+sonido_game_over = pygame.mixer.Sound('sound/die.wav')
+sonido_misil = pygame.mixer.Sound('sound/launch_rocket.wav')
+sonido_misil.set_volume(0.2)
+sonido_hit1 = pygame.mixer.Sound('sound/metal_hit_1.wav')
+sonido_hit2 = pygame.mixer.Sound('sound/metal_hit_2.wav')
+sonido_hit2.set_volume(0.2)
+
+sonido_talk = pygame.mixer.Sound('sound/talk_insect.mp3')
+
 
 
 # Configuración del cañón   
-ANCHO_CANON = 12
-ALTO_CANON = 12
+ANCHO_CANON = 20
+ALTO_CANON = 20
 canon_color = (255, 0, 0)  # Rojo
 canon_pos_x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2
 canon_pos_y = ALTO_PANTALLA - ALTO_CANON - 15
@@ -358,9 +367,11 @@ def moverNave(prun):
     global Score, Vidas, estado, respawn
     
     if prun.x < 0:
+        sonido_hit2.play()
         cambiarDir(prun)
         prun.y = prun.y + prun.Alto
     elif prun.x > ANCHO_PANTALLA - prun.Ancho:
+        sonido_hit2.play()
         cambiarDir(prun)
         prun.y = prun.y + prun.Alto
     
@@ -430,9 +441,10 @@ def moverBalaU(prun):
             rect_objeto = crear_rect(gusano)
             if rect_bala.colliderect(rect_objeto):
                 print("¡Colisión detectada con un objeto!")
+                sonido_talk.play()
                 prun.y = 0
                 gusano.Salud -= 1
-                CambiarColor(gusano)
+                #CambiarColor(gusano)
                 Score += 10
                 
     # Detectar colision con obstaculos
@@ -443,6 +455,7 @@ def moverBalaU(prun):
             prun.y = 0
             obstaculo.Salud -= 1
             sonido_impact_obj.play()
+            Score += 5
                         
     if prun.y > 0:
         #dibujar(prun)
@@ -451,7 +464,7 @@ def moverBalaU(prun):
 
 def moverBalaN(prun):
     global cant_misiles, respawn, estado, Vidas
-    prun.y = prun.y + 15
+    prun.y = prun.y + 20
     if prun.y < ALTO_PANTALLA:
         #dibujar(prun)
         prun.Hora = pygame.time.get_ticks()
@@ -471,9 +484,10 @@ def moverBalaN(prun):
             respawn = True      
             return
         else:
+            sonido_game_over.play()
             Q.vaciar()
             estado = 'game_over'
-            canon.Salud = 0
+            #canon.Salud = 0
             respawn = True
             return
     
@@ -502,23 +516,44 @@ def crearBala():
 def crearMisil():
     global cant_misiles
     numero = rd.randint(0,150)
-    if numero == 0 and cant_misiles < 4:
+    if numero == 0 and cant_misiles < 3:
         Misil = PCB()
-        Misil.Alto = 15
+        Misil.Alto = 30
         Misil.Ancho = 10
-        Misil.Color = (0,0,0)
+        Misil.Color = (0, 0, 0)
         Misil.Retardo = 1
         Misil.Hora = pygame.time.get_ticks()
         Misil.x = rd.choice(range(20, 760 + 1, 20))
         Misil.y = 0
         Misil.Tipo = MISIL
         cant_misiles += 1
+        sonido_misil.play()
+        
         
         Q.meter(Misil)         
-
-    
-    
+ #Planificador Basado en los FPS del juego            
 def planificador():
+    global obstaculos, exp
+    PRUN = Q.sacar()
+    if PRUN is None:
+        if exp == 0:
+            obstaculos = [PCB() for _ in range(20)]
+            start()   
+        exp -= 1    
+        return
+    else:  
+        crearMisil()        
+        if PRUN.Tipo == CENTIPEDE:
+            moverNave(PRUN)
+        elif PRUN.Tipo == BALA:
+            moverBalaU(PRUN)
+        elif PRUN.Tipo == MISIL:
+            moverBalaN(PRUN)
+
+
+
+#Planificador basado en el tiempo del sistema similar al ejemplo en delphi, NO ESTA SIENDO UTILIZADO   
+def planificador2():
     global obstaculos, exp
     PRUN = Q.sacar()
     crearMisil()
@@ -528,10 +563,8 @@ def planificador():
             obstaculos = [PCB() for _ in range(20)]
             start()   
         exp -= 1    
-        return
-        
+        return     
     current_time_ms = pygame.time.get_ticks()
-
     if PRUN.Hora + PRUN.Retardo > current_time_ms:
         Q.meter(PRUN)
         #moverNave(PRUN)
@@ -546,6 +579,8 @@ def planificador():
             moverBalaU(PRUN)
         elif PRUN.Tipo == MISIL:
             moverBalaN(PRUN)
+
+
 
 ##--------------------------------------------Bucle principal del juego----------------------------------------------
 
