@@ -7,6 +7,7 @@ import pygame
 import sys
 import time
 import random as rd
+import os
 
 from cola import PCB, cola
 
@@ -51,7 +52,7 @@ pygame.mixer.init()
 ANCHO_PANTALLA = 800
 ALTO_PANTALLA = 600
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
-pygame.display.set_caption("Juego de Cañón Sencillo")
+pygame.display.set_caption("Juego de Cienpies")
 
 
 # Crear un pool de objetos PCB
@@ -63,64 +64,76 @@ lvidas = [PCB() for _ in range(Vidas)]
 bodys = [PCB() for _ in range(4)]
 
 ###-----------------------------------Carga de recursos------------------------------------------------------------##
+
+# Obtener la ruta base del ejecutable
+if getattr(sys, 'frozen', False):
+    # Si la aplicación está empaquetada
+    base_path = sys._MEIPASS  # Esta variable está definida por PyInstaller
+else:
+    # Si la aplicación se está ejecutando en el entorno de Python
+    base_path = os.path.abspath(".")
+
 #Imagenes
-img_canon_org = pygame.image.load('img/cannon.png')
+img_canon_org = pygame.image.load(os.path.join(base_path, "img", "cannon.png"))
+#img_canon_org = pygame.image.load('img/cannon.png')
 img_canon = pygame.transform.scale(img_canon_org, (30, 30))
 img_vida = pygame.transform.scale(img_canon_org, (20, 20))
-img_menu_org = pygame.image.load('img/main_menu_background.png')
+img_menu_org = pygame.image.load(os.path.join(base_path, "img", "main_menu_background.png"))
 img_menu = pygame.transform.scale(img_menu_org, (800, 600))
 
-img_gameover_org = pygame.image.load('img/game_over_back.png')
+img_gameover_org = pygame.image.load(os.path.join(base_path, "img", "game_over_back.png"))
 img_gameover = pygame.transform.scale(img_gameover_org, (800, 600))
 
 
 #Frames de animacion
-img_canexp0_org = pygame.image.load('img/cannon_explosion0.png')
+img_canexp0_org = pygame.image.load(os.path.join(base_path, "img", "cannon_explosion0.png"))
 img_canexp0 = pygame.transform.scale(img_canexp0_org, (30, 30))
 
-img_canexp01_org = pygame.image.load('img/cannon_explosion01.png')
+img_canexp01_org = pygame.image.load(os.path.join(base_path, "img", "cannon_explosion01.png"))
 img_canexp01 = pygame.transform.scale(img_canexp01_org, (30, 30))
 
-img_canexp1_org = pygame.image.load('img/cannon_explosion1.png')
+img_canexp1_org = pygame.image.load(os.path.join(base_path, "img", "cannon_explosion1.png"))
 img_canexp1 = pygame.transform.scale(img_canexp1_org, (30, 30))
 
-img_canexp2_org = pygame.image.load('img/cannon_explosion2.png')
+img_canexp2_org = pygame.image.load(os.path.join(base_path, "img", "cannon_explosion2.png"))
 img_canexp2 = pygame.transform.scale(img_canexp2_org, (30, 30))
 
-img_canexp3_org = pygame.image.load('img/cannon_explosion3.png')
+img_canexp3_org = pygame.image.load(os.path.join(base_path, "img", "cannon_explosion3.png"))
 img_canexp3 = pygame.transform.scale(img_canexp3_org, (30, 30))
 
 framesexp = [img_canexp0, img_canexp1, img_canexp01, img_canexp01 , img_canexp2, img_canexp3]
 
-img_obs_org = pygame.image.load('img/obstaculo.png')
+# Imágenes de obstáculos
+img_obs_org = pygame.image.load(os.path.join(base_path, "img", "obstaculo.png"))
 img_obs = pygame.transform.scale(img_obs_org, (20, 20))
 
-img_obs1_org = pygame.image.load('img/obstaculo_1.png')
+img_obs1_org = pygame.image.load(os.path.join(base_path, "img", "obstaculo_1.png"))
 img_obs1 = pygame.transform.scale(img_obs1_org, (20, 20))
 
-img_obs2_org = pygame.image.load('img/obstaculo_2.png')
+img_obs2_org = pygame.image.load(os.path.join(base_path, "img", "obstaculo_2.png"))
 img_obs2 = pygame.transform.scale(img_obs2_org, (20, 20))
 
-img_obs3_org = pygame.image.load('img/obstaculo_3.png')
+img_obs3_org = pygame.image.load(os.path.join(base_path, "img", "obstaculo_3.png"))
 img_obs3 = pygame.transform.scale(img_obs3_org, (20, 20))
 
-img_head0_org = pygame.image.load('img/head_0.png')
+# Imágenes de cabezas (con y sin inversión horizontal)
+img_head0_org = pygame.image.load(os.path.join(base_path, "img", "head_0.png"))
 img_head0 = pygame.transform.scale(img_head0_org, (20, 20))
 img_head0_inv = pygame.transform.flip(img_head0, True, False)
 
-img_head2_org = pygame.image.load('img/head_2.png')
+img_head2_org = pygame.image.load(os.path.join(base_path, "img", "head_2.png"))
 img_head2 = pygame.transform.scale(img_head2_org, (20, 20))
 img_head2_inv = pygame.transform.flip(img_head2, True, False)
 
-img_head3_org = pygame.image.load('img/head_3.png')
+img_head3_org = pygame.image.load(os.path.join(base_path, "img", "head_3.png"))
 img_head3 = pygame.transform.scale(img_head3_org, (20, 20))
 img_head3_inv = pygame.transform.flip(img_head3, True, False)
 
-img_head4_org = pygame.image.load('img/head_4.png')
+img_head4_org = pygame.image.load(os.path.join(base_path, "img", "head_4.png"))
 img_head4 = pygame.transform.scale(img_head4_org, (20, 20))
 img_head4_inv = pygame.transform.flip(img_head4, True, False)
- 
-img_head6_org = pygame.image.load('img/head_6.png')
+
+img_head6_org = pygame.image.load(os.path.join(base_path, "img", "head_6.png"))
 img_head6 = pygame.transform.scale(img_head6_org, (20, 20))
 img_head6_inv = pygame.transform.flip(img_head6, True, False)
 
@@ -128,24 +141,24 @@ framehead = [img_head0, img_head2, img_head3, img_head4, img_head6, img_head4, i
 frameheadInv = [img_head0_inv, img_head2_inv, img_head3_inv, img_head4_inv, img_head6_inv, img_head4_inv, 
                 img_head3_inv, img_head2_inv, img_head0_inv]
 
-#Cuerpo del gusano frames
-img_body2_org = pygame.image.load('img/body_2.png')
+# Cuerpo del gusano frames
+img_body2_org = pygame.image.load(os.path.join(base_path, "img", "body_2.png"))
 img_body2 = pygame.transform.scale(img_body2_org, (20, 20))
 img_body2_inv = pygame.transform.flip(img_body2, True, False)
 
-img_body3_org = pygame.image.load('img/body_3.png')
+img_body3_org = pygame.image.load(os.path.join(base_path, "img", "body_3.png"))
 img_body3 = pygame.transform.scale(img_body3_org, (20, 20))
 img_body3_inv = pygame.transform.flip(img_body3, True, False)
 
-img_body4_org = pygame.image.load('img/body_4.png')
+img_body4_org = pygame.image.load(os.path.join(base_path, "img", "body_4.png"))
 img_body4 = pygame.transform.scale(img_body4_org, (20, 20))
 img_body4_inv = pygame.transform.flip(img_body4, True, False)
 
-img_body6_org = pygame.image.load('img/body_6.png')
+img_body6_org = pygame.image.load(os.path.join(base_path, "img", "body_6.png"))
 img_body6 = pygame.transform.scale(img_body6_org, (20, 20))
 img_body6_inv = pygame.transform.flip(img_body6, True, False)
 
-img_body7_org = pygame.image.load('img/body_7.png')
+img_body7_org = pygame.image.load(os.path.join(base_path, "img", "body_7.png"))
 img_body7 = pygame.transform.scale(img_body7_org, (20, 20))
 img_body7_inv = pygame.transform.flip(img_body7, True, False)
 
@@ -154,38 +167,39 @@ framebodyInv = [img_body2_inv, img_body3_inv, img_body4_inv, img_body6_inv, img_
                 , img_body6_inv, img_body4_inv, img_body3_inv, img_body2_inv]
 
 # Misil frames
-img_misil0_org = pygame.image.load('img/frame_0.png')
+# Misil frames
+img_misil0_org = pygame.image.load(os.path.join(base_path, "img", "frame_0.png"))
 img_misil0 = pygame.transform.scale(img_misil0_org, (10, 30))
 
-img_misil1_org = pygame.image.load('img/frame_1.png')
+img_misil1_org = pygame.image.load(os.path.join(base_path, "img", "frame_1.png"))
 img_misil1 = pygame.transform.scale(img_misil1_org, (10, 30))
 
-img_misil2_org = pygame.image.load('img/frame_2.png')
+img_misil2_org = pygame.image.load(os.path.join(base_path, "img", "frame_2.png"))
 img_misil2 = pygame.transform.scale(img_misil2_org, (10, 30))
 
-img_misil3_org = pygame.image.load('img/frame_3.png')
+img_misil3_org = pygame.image.load(os.path.join(base_path, "img", "frame_3.png"))
 img_misil3 = pygame.transform.scale(img_misil3_org, (10, 30))
 
-img_misil0_org = pygame.image.load('img/frame_4.png')
-img_misil4 = pygame.transform.scale(img_misil0_org, (10, 30))
+img_misil4_org = pygame.image.load(os.path.join(base_path, "img", "frame_4.png"))
+img_misil4 = pygame.transform.scale(img_misil4_org, (10, 30))
 
 frameMisil = [img_misil0, img_misil1, img_misil2, img_misil3, img_misil4]
 
 # Efectos de sonido
-sonido_disparo = pygame.mixer.Sound('sound/laserSmall_002.ogg')
-sonido_slime = pygame.mixer.Sound('sound/slime_000.ogg')
-sonido_impact_obj = pygame.mixer.Sound('sound/impact_obj.wav')
-sonido_explosion = pygame.mixer.Sound('sound/explosionCrunch_003.ogg')
-sonido_game_over = pygame.mixer.Sound('sound/die.wav')
-sonido_misil = pygame.mixer.Sound('sound/launch_rocket.wav')
+sonido_disparo = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'laserSmall_002.ogg'))
+sonido_slime = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'slime_000.ogg'))
+sonido_impact_obj = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'impact_obj.wav'))
+sonido_explosion = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'explosionCrunch_003.ogg'))
+sonido_game_over = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'die.wav'))
+sonido_misil = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'launch_rocket.wav'))
 sonido_misil.set_volume(0.2)
-sonido_hit1 = pygame.mixer.Sound('sound/metal_hit_1.wav')
-sonido_hit2 = pygame.mixer.Sound('sound/metal_hit_2.wav')
+sonido_hit1 = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'metal_hit_1.wav'))
+sonido_hit2 = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'metal_hit_2.wav'))
 sonido_hit2.set_volume(0.2)
 
-sonido_talk = pygame.mixer.Sound('sound/talk_insect.mp3')
-sonido_walk = pygame.mixer.Sound('sound/walk.mp3')
-main_menu_sound = pygame.mixer.Sound('sound/main_menu_sound.mp3')
+sonido_talk = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'talk_insect.mp3'))
+sonido_walk = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'walk.mp3'))
+main_menu_sound = pygame.mixer.Sound(os.path.join(base_path, 'sound', 'main_menu_sound.mp3'))
 
 # Tiempo de la última reproducción
 ultimo_tiempo_reproduccion = 0
@@ -447,7 +461,7 @@ def moverNave(prun):
 
 def moverBalaU(prun):
     global Score
-    prun.y = prun.y -15
+    prun.y = prun.y -20
     
     # Detectar colision con el cienpies
     rect_bala = crear_rect(prun)
@@ -701,7 +715,7 @@ while corriendo:
     pygame.display.flip()
 
     # Control de la velocidad del juego
-    pygame.time.Clock().tick(50)
+    pygame.time.Clock().tick(240)
 
 # Salir de Pygame
 pygame.quit()
