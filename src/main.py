@@ -28,12 +28,17 @@ framesCentipede = []
 Score = 0
 Vidas = 4
 estado = ''
+respawn = False
+n_spawn = 0
+cant_misiles = 0
+exp = 4
 
 #Tipos
 CENTIPEDE = 0
 BALA = 1
 OBSTACULO = 2
 CANON = 3
+MISIL = 4
 
 # Inicializar Pygame
 pygame.init()
@@ -55,6 +60,7 @@ pcb_pool = [PCB() for _ in range(pool_size)]
 free_pcb_indices = list(range(pool_size))
 obstaculos = [PCB() for _ in range(20)]
 lvidas = [PCB() for _ in range(Vidas)]
+bodys = [PCB() for _ in range(5)]
 
 ###-----------------------------------Carga de recursos------------------------------------------------------------##
 #Imagenes
@@ -64,6 +70,23 @@ img_vida = pygame.transform.scale(img_canon_org, (20, 20))
 
 
 #Frames de animacion
+img_canexp0_org = pygame.image.load('img/cannon_explosion0.png')
+img_canexp0 = pygame.transform.scale(img_canexp0_org, (30, 30))
+
+img_canexp01_org = pygame.image.load('img/cannon_explosion01.png')
+img_canexp01 = pygame.transform.scale(img_canexp01_org, (30, 30))
+
+img_canexp1_org = pygame.image.load('img/cannon_explosion1.png')
+img_canexp1 = pygame.transform.scale(img_canexp1_org, (30, 30))
+
+img_canexp2_org = pygame.image.load('img/cannon_explosion2.png')
+img_canexp2 = pygame.transform.scale(img_canexp2_org, (30, 30))
+
+img_canexp3_org = pygame.image.load('img/cannon_explosion3.png')
+img_canexp3 = pygame.transform.scale(img_canexp3_org, (30, 30))
+
+framesexp = [img_canexp0, img_canexp1, img_canexp01, img_canexp01 , img_canexp2, img_canexp3]
+
 img_obs_org = pygame.image.load('img/obstaculo.png')
 img_obs = pygame.transform.scale(img_obs_org, (20, 20))
 
@@ -99,7 +122,8 @@ img_head6_inv = pygame.transform.flip(img_head6, True, False)
 framehead = [img_head0, img_head2, img_head3, img_head4, img_head6, img_head4, img_head3, img_head2, img_head0]
 frameheadInv = [img_head0_inv, img_head2_inv, img_head3_inv, img_head4_inv, img_head6_inv, img_head4_inv, 
                 img_head3_inv, img_head2_inv, img_head0_inv]
-   
+
+#Cuerpo del gusano frames
 img_body2_org = pygame.image.load('img/body_2.png')
 img_body2 = pygame.transform.scale(img_body2_org, (20, 20))
 img_body2_inv = pygame.transform.flip(img_body2, True, False)
@@ -124,6 +148,24 @@ framebody = [img_body2, img_body3, img_body4, img_body6, img_body7, img_body6, i
 framebodyInv = [img_body2_inv, img_body3_inv, img_body4_inv, img_body6_inv, img_body7_inv
                 , img_body6_inv, img_body4_inv, img_body3_inv, img_body2_inv]
 
+# Misil frames
+img_misil0_org = pygame.image.load('img/frame_0.png')
+img_misil0 = pygame.transform.scale(img_misil0_org, (35, 40))
+
+img_misil1_org = pygame.image.load('img/frame_1.png')
+img_misil1 = pygame.transform.scale(img_misil1_org, (35, 40))
+
+img_misil2_org = pygame.image.load('img/frame_2.png')
+img_misil2 = pygame.transform.scale(img_misil2_org, (35, 40))
+
+img_misil3_org = pygame.image.load('img/frame_3.png')
+img_misil3 = pygame.transform.scale(img_misil3_org, (35, 40))
+
+img_misil0_org = pygame.image.load('img/frame_4.png')
+img_misil4 = pygame.transform.scale(img_misil0_org, (35, 40))
+
+frameMisil = [img_misil0, img_misil1, img_misil2, img_misil3, img_misil4]
+
 # Efectos de sonido
 sonido_disparo = pygame.mixer.Sound('sound/laserSmall_002.ogg')
 sonido_slime = pygame.mixer.Sound('sound/slime_000.ogg')
@@ -139,12 +181,7 @@ canon_pos_x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2
 canon_pos_y = ALTO_PANTALLA - ALTO_CANON - 15
 velocidad = 5
 
-canon.x = canon_pos_x
-canon.y = canon_pos_y
-canon.Alto = ALTO_CANON
-canon.Ancho = ANCHO_CANON
-canon.Color = canon_color 
-canon.Tipo = CANON
+
 
 # Función de pantalla inicial
 def pantalla_inicial():
@@ -165,8 +202,22 @@ def pantalla_game_over():
     return game_over, reintentar, rect_game_over, rect_reintentar
 
 def start():
-    global head, body1, body2, body3, body4
-    #head del cienpies
+    global head, body1, body2, body3, body4, n_spawn, exp, cant_misiles
+    
+    exp = 60
+    n_spawn = 100
+    cant_misiles = 0
+    #Cañon
+    canon.x = canon_pos_x
+    canon.y = canon_pos_y
+    canon.Alto = ALTO_CANON
+    canon.Ancho = ANCHO_CANON
+    canon.Color = canon_color 
+    canon.Tipo = CANON
+    canon.is_body = False
+    canon.Salud = 1
+    
+    #head del gusano
     head.Tipo = CENTIPEDE
     head.Ancho= 20
     head.Alto  = 20
@@ -179,60 +230,23 @@ def start():
     head.Salud = 2
     Q.meter(head)
 
-    #Cuerpo del cienpies
-    body1.Tipo = CENTIPEDE
-    body1.Ancho= 20
-    body1.Alto  = 20
-    body1.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 20
-    body1.y = 10
-    body1.Color = canon_color
-    body1.Hora = pygame.time.get_ticks()
-    body1.Retardo = RetardoCentipede
-    body1.Dir = 0 
-    body1.Salud = 2
-    body1.is_body = True
-    Q.meter(body1)
-
-    body2.Tipo = CENTIPEDE
-    body2.Ancho= 20
-    body2.Alto  = 20
-    body2.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 40
-    body2.y = 10
-    body2.Color = canon_color
-    body2.Hora = pygame.time.get_ticks()
-    body2.Retardo = RetardoCentipede
-    body2.Dir = 0  
-    body2.Salud = 2
-    body2.is_body = True          
-    Q.meter(body2)
-
-    body3.Tipo = CENTIPEDE
-    body3.Ancho= 20
-    body3.Alto  = 20
-    body3.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 60
-    body3.y = 10
-    body3.Color = canon_color
-    body3.Hora = pygame.time.get_ticks()
-    body3.Retardo = RetardoCentipede
-    body3.Dir = 0 
-    body3.Salud = 2
-    body3.is_body = True
-    Q.meter(body3)
-
-    body4.Tipo = CENTIPEDE
-    body4.Ancho= 20
-    body4.Alto  = 20
-    body4.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + 80
-    body4.y = 10
-    body4.Color = canon_color
-    body4.Hora = pygame.time.get_ticks()
-    body4.Retardo = RetardoCentipede
-    body4.Dir = 0 
-    body4.Salud = 2  
-    body4.is_body = True         
-    Q.meter(body4)
+    #Cuerpo del gusano
+    espacio = 20
+    for body in bodys:
+        body.Tipo = CENTIPEDE
+        body.Ancho= 20
+        body.Alto  = 20
+        body.x = ANCHO_PANTALLA // 2 - ANCHO_CANON // 2 + espacio
+        body.y = 10
+        body.Color = canon_color
+        body.Hora = pygame.time.get_ticks()
+        body.Retardo = RetardoCentipede
+        body.Dir = 0 
+        body.Salud = 2
+        body.is_body = True
+        Q.meter(body)
+        espacio += 20
     
-
     for obstaculo in obstaculos:
         obstaculo.Color = Clwhite
         obstaculo.Alto = head.Alto
@@ -284,8 +298,19 @@ def dibujar(objeto):
     if objeto.Tipo == CANON:
         if objeto.is_body:
             pantalla.blit(img_vida, rect_obj)
-        else:   
-            pantalla.blit(img_canon, rect_obj)
+        else:  
+            if canon.Salud == 1: 
+                pantalla.blit(img_canon, rect_obj)
+            elif canon.Salud == 0:
+                index = exp//10 -1
+                cimg = framesexp[index]
+                pantalla.blit(cimg, rect_obj)
+
+    elif objeto.Tipo == MISIL:
+        imgm = frameMisil.pop(0)
+        pantalla.blit(imgm, rect_obj)
+        frameMisil.append(imgm)
+        
         
     elif objeto.Tipo == OBSTACULO:
         if objeto.Salud == 4:
@@ -328,11 +353,9 @@ def cambiarDir(objeto):
     elif objeto.Dir == 1:
         objeto.Dir = 0
 
-def textvida():
-    return Vidas
 
 def moverNave(prun):
-    global Score, Vidas, estado
+    global Score, Vidas, estado, respawn
     
     if prun.x < 0:
         cambiarDir(prun)
@@ -356,12 +379,15 @@ def moverNave(prun):
             sonido_explosion.play()
             Q.vaciar()
             Vidas -= 1  
-            #lvidas.pop(0)       
+            #lvidas.pop(0) 
+            respawn = True      
             return
         else:
             Q.vaciar()
             estado = 'game_over'
+            respawn = True
             return
+        
     
     if prun.Dir == 0:
         vel = 10
@@ -424,7 +450,32 @@ def moverBalaU(prun):
         Q.meter(prun)
 
 def moverBalaN(prun):
-    print(f'Moviendo bala N: {prun}')
+    global cant_misiles, respawn, estado, Vidas
+    prun.y = prun.y + 15
+    if prun.y < ALTO_PANTALLA:
+        #dibujar(prun)
+        prun.Hora = pygame.time.get_ticks()
+        Q.meter(prun)
+    else:
+        cant_misiles -= 1
+    
+    rect_misil = crear_rect(prun)
+    #detectar colision con jugador
+    if rect_misil.colliderect(crear_rect(canon)):
+        if Vidas > 0:
+            sonido_explosion.play()
+            Q.vaciar()
+            Vidas -= 1  
+            #lvidas.pop(0) 
+            canon.Salud = 0
+            respawn = True      
+            return
+        else:
+            Q.vaciar()
+            estado = 'game_over'
+            canon.Salud = 0
+            respawn = True
+            return
     
 def crearBala():
     global id
@@ -441,24 +492,42 @@ def crearBala():
     BalaUser.x = (canon.Ancho - BalaUser.Ancho) // 2 + canon.x
     BalaUser.y = canon.y - BalaUser.Alto
     BalaUser.Retardo = 1
-    #BalaUser.Hora = HoraAbs
     BalaUser.Hora = pygame.time.get_ticks()
     dibujar(BalaUser)
     sonido_disparo.play()
 
     Q.meter(BalaUser)
-    id += 1             
+    id += 1  
+    
+def crearMisil():
+    global cant_misiles
+    numero = rd.randint(0,150)
+    if numero == 0 and cant_misiles < 4:
+        Misil = PCB()
+        Misil.Alto = 15
+        Misil.Ancho = 10
+        Misil.Color = (0,0,0)
+        Misil.Retardo = 1
+        Misil.Hora = pygame.time.get_ticks()
+        Misil.x = rd.choice(range(20, 760 + 1, 20))
+        Misil.y = 0
+        Misil.Tipo = MISIL
+        cant_misiles += 1
+        
+        Q.meter(Misil)         
 
     
     
 def planificador():
-    global obstaculos
+    global obstaculos, exp
     PRUN = Q.sacar()
+    crearMisil()
     #print(PRUN)
     if PRUN is None:
-        print('nuevo')
-        obstaculos = [PCB() for _ in range(20)]
-        start()
+        if exp == 0:
+            obstaculos = [PCB() for _ in range(20)]
+            start()   
+        exp -= 1    
         return
         
     current_time_ms = pygame.time.get_ticks()
@@ -475,14 +544,15 @@ def planificador():
             moverNave(PRUN)
         elif PRUN.Tipo == BALA:
             moverBalaU(PRUN)
-        elif PRUN.Tipo == "BALAN":
+        elif PRUN.Tipo == MISIL:
             moverBalaN(PRUN)
 
 ##--------------------------------------------Bucle principal del juego----------------------------------------------
 
 estado = 'inicio'
 corriendo = True
-
+#n_spawn = 100
+dibujarS = True
 sw = True
 while corriendo:
     for evento in pygame.event.get():
@@ -499,6 +569,7 @@ while corriendo:
                     estado = "jugando" # Reinicia el juego
                     Score = 0
                     Vidas = 4
+                    n_spawn = 100
 
     if estado == 'jugando':
         # Obtener las teclas presionadas
@@ -514,7 +585,19 @@ while corriendo:
         
         # Dibujar en la pantalla
         pantalla.fill((0, 0, 0))  # Limpiar la pantalla con color negro
-        dibujar(canon)
+        
+        if respawn:
+            if n_spawn > 0:
+                if dibujarS:
+                    dibujar(canon)
+                    dibujarS = False
+                else:
+                    dibujarS = True
+            else:
+                respawn = False
+            n_spawn -= 1       
+        else:
+            dibujar(canon)
         
         for i in range(Vidas):
             dibujar(lvidas[i])
@@ -556,7 +639,7 @@ while corriendo:
     pygame.display.flip()
 
     # Control de la velocidad del juego
-    pygame.time.Clock().tick(260)
+    pygame.time.Clock().tick(200)
 
 # Salir de Pygame
 pygame.quit()
