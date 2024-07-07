@@ -67,6 +67,11 @@ bodys = [PCB() for _ in range(4)]
 img_canon_org = pygame.image.load('img/cannon.png')
 img_canon = pygame.transform.scale(img_canon_org, (30, 30))
 img_vida = pygame.transform.scale(img_canon_org, (20, 20))
+img_menu_org = pygame.image.load('img/main_menu_background.png')
+img_menu = pygame.transform.scale(img_menu_org, (800, 600))
+
+img_gameover_org = pygame.image.load('img/game_over_back.png')
+img_gameover = pygame.transform.scale(img_gameover_org, (800, 600))
 
 
 #Frames de animacion
@@ -179,8 +184,11 @@ sonido_hit2 = pygame.mixer.Sound('sound/metal_hit_2.wav')
 sonido_hit2.set_volume(0.2)
 
 sonido_talk = pygame.mixer.Sound('sound/talk_insect.mp3')
+sonido_walk = pygame.mixer.Sound('sound/walk.mp3')
+main_menu_sound = pygame.mixer.Sound('sound/main_menu_sound.mp3')
 
-
+# Tiempo de la última reproducción
+ultimo_tiempo_reproduccion = 0
 
 # Configuración del cañón   
 ANCHO_CANON = 20
@@ -194,21 +202,24 @@ velocidad = 5
 
 # Función de pantalla inicial
 def pantalla_inicial():
-    fuente = pygame.font.Font(None, 74)
+    fuente = pygame.font.Font(None, 45)
     titulo = fuente.render("Pantalla Inicial", True, (255, 255, 255))
     iniciar = fuente.render("Comenzar", True, (255, 255, 255))
+    iniciar_hover = fuente.render("Comenzar", True, (255, 0, 0))
     rect_titulo = titulo.get_rect(center=(400, 200))
-    rect_iniciar = iniciar.get_rect(center=(400, 400))
-    return titulo, iniciar, rect_titulo, rect_iniciar
+    rect_iniciar = iniciar.get_rect(center=(570, 300))
+    return titulo, iniciar, iniciar_hover, rect_titulo, rect_iniciar
 
 # Función de pantalla de Game Over
 def pantalla_game_over():
-    fuente = pygame.font.Font(None, 74)
-    game_over = fuente.render("Game Over", True, (255, 0, 0))
+    global Score
+    fuente = pygame.font.Font(None, 65)
+    game_over = fuente.render(f"Puntuacion: {Score}", True, (255, 255, 255))
     reintentar = fuente.render("Reintentar", True, (255, 255, 255))
+    reintentarhover = fuente.render("Reintentar", True, (255, 0, 0))
     rect_game_over = game_over.get_rect(center=(400, 200))
     rect_reintentar = reintentar.get_rect(center=(400, 400))
-    return game_over, reintentar, rect_game_over, rect_reintentar
+    return game_over, reintentar, reintentarhover, rect_game_over, rect_reintentar
 
 def start():
     global head, body1, body2, body3, body4, n_spawn, exp, cant_misiles
@@ -293,6 +304,13 @@ def obtener_pcb_del_pool():
         return free_pcb_indices.pop()
     else:
         return None
+
+def sonido_centipede():
+    global ultimo_tiempo_reproduccion
+    tiempo_actual = time.time()
+    if tiempo_actual - ultimo_tiempo_reproduccion >= 0.5:
+        sonido_walk.play()
+        ultimo_tiempo_reproduccion = tiempo_actual
 
 def devolver_pcb_al_pool(indice):
     free_pcb_indices.append(indice)
@@ -383,7 +401,7 @@ def moverNave(prun):
             #print("¡Colisión detectada con un objeto!")
             cambiarDir(prun)
             prun.y = prun.y + prun.Alto
-    
+            
     #detectar colision con jugador
     if rect_gus.colliderect(crear_rect(canon)):
         if Vidas > 0:
@@ -398,16 +416,14 @@ def moverNave(prun):
             estado = 'game_over'
             respawn = True
             return
-        
-    
     if prun.Dir == 0:
         vel = 10
     elif prun.Dir == 1:
-        vel = -10
-    
+        vel = -10 
+    if not prun.is_body:
+        sonido_centipede()  
     prun.x -= vel
     prun.Hora = pygame.time.get_ticks()
-    #print(prun.Hora)
     if prun.Salud > 0:
         Q.meter(prun)
     else:
@@ -417,7 +433,6 @@ def moverNave(prun):
         nobstaculo.Tipo = OBSTACULO
         obstaculos.append(nobstaculo)
         Score += 100
-        #camb = Q.sacar()
         i = 0
         while i <= Q.long():
             elem = Q.pos(i)
@@ -437,10 +452,9 @@ def moverBalaU(prun):
     # Detectar colision con el cienpies
     rect_bala = crear_rect(prun)
     for gusano in Q:
-        if gusano.Tipo != BALA:
+        if gusano.Tipo != BALA and gusano.Tipo != MISIL:
             rect_objeto = crear_rect(gusano)
             if rect_bala.colliderect(rect_objeto):
-                print("¡Colisión detectada con un objeto!")
                 sonido_talk.play()
                 prun.y = 0
                 gusano.Salud -= 1
@@ -451,7 +465,6 @@ def moverBalaU(prun):
     for obstaculo in obstaculos:
         rect_objeto = crear_rect(obstaculo)
         if rect_bala.colliderect(rect_objeto):
-            #print("¡Colisión detectada con un objeto!")
             prun.y = 0
             obstaculo.Salud -= 1
             sonido_impact_obj.play()
@@ -466,7 +479,6 @@ def moverBalaN(prun):
     global cant_misiles, respawn, estado, Vidas
     prun.y = prun.y + 20
     if prun.y < ALTO_PANTALLA:
-        #dibujar(prun)
         prun.Hora = pygame.time.get_ticks()
         Q.meter(prun)
     else:
@@ -479,7 +491,6 @@ def moverBalaN(prun):
             sonido_explosion.play()
             Q.vaciar()
             Vidas -= 1  
-            #lvidas.pop(0) 
             canon.Salud = 0
             respawn = True      
             return
@@ -487,7 +498,6 @@ def moverBalaN(prun):
             sonido_game_over.play()
             Q.vaciar()
             estado = 'game_over'
-            #canon.Salud = 0
             respawn = True
             return
     
@@ -519,7 +529,7 @@ def crearMisil():
     if numero == 0 and cant_misiles < 3:
         Misil = PCB()
         Misil.Alto = 30
-        Misil.Ancho = 10
+        Misil.Ancho = 15
         Misil.Color = (0, 0, 0)
         Misil.Retardo = 1
         Misil.Hora = pygame.time.get_ticks()
@@ -580,11 +590,16 @@ def planificador2():
         elif PRUN.Tipo == MISIL:
             moverBalaN(PRUN)
 
-
+def menusound():
+    if estado == 'inicio':
+        main_menu_sound.play(-1)
+    if estado == 'jugando':
+        main_menu_sound.stop()
 
 ##--------------------------------------------Bucle principal del juego----------------------------------------------
 
 estado = 'inicio'
+main_menu_sound.play(-1)
 corriendo = True
 #n_spawn = 100
 dibujarS = True
@@ -599,13 +614,15 @@ while corriendo:
         if estado == "inicio" and evento.type == pygame.MOUSEBUTTONDOWN:
                 if rect_iniciar.collidepoint(evento.pos):
                     estado = "jugando"
+                    menusound()
         elif estado == "game_over" and evento.type == pygame.MOUSEBUTTONDOWN:
                 if rect_reintentar and rect_reintentar.collidepoint(evento.pos):
                     estado = "jugando" # Reinicia el juego
                     Score = 0
                     Vidas = 4
                     n_spawn = 100
-
+    # Obtener la posición del mouse
+    mouse_pos = pygame.mouse.get_pos()
     if estado == 'jugando':
         # Obtener las teclas presionadas
         teclas = pygame.key.get_pressed()
@@ -659,22 +676,32 @@ while corriendo:
         
     elif estado =='inicio':
         pantalla.fill((0, 0, 0))
-        titulo, iniciar, rect_titulo, rect_iniciar = pantalla_inicial()
+        titulo, iniciar, iniciarhover, rect_titulo, rect_iniciar = pantalla_inicial()
         pantalla.fill((0, 0, 0))
-        pantalla.blit(titulo, rect_titulo)
-        pantalla.blit(iniciar, rect_iniciar)
+        pantalla.blit(img_menu, (0, 0))
+        #pantalla.blit(titulo, rect_titulo)
+        if rect_iniciar.collidepoint(mouse_pos):
+            texto_surface = iniciarhover
+        else:
+            texto_surface = iniciar
+        pantalla.blit(texto_surface, rect_iniciar)
     elif estado == 'game_over':
         pantalla.fill((0, 0, 0))
-        game_over, reintentar, rect_game_over, rect_reintentar = pantalla_game_over()
+        pantalla.blit(img_gameover, (0, 0))
+        game_over, reintentar, reintentarhover, rect_game_over, rect_reintentar = pantalla_game_over()
         pantalla.blit(game_over, rect_game_over)
-        pantalla.blit(reintentar, rect_reintentar)
+        if rect_reintentar.collidepoint(mouse_pos):
+            texto_surface = reintentarhover
+        else:
+            texto_surface = reintentar
+        pantalla.blit(texto_surface, rect_reintentar)
         
 
     # Actualizar la pantalla
     pygame.display.flip()
 
     # Control de la velocidad del juego
-    pygame.time.Clock().tick(200)
+    pygame.time.Clock().tick(50)
 
 # Salir de Pygame
 pygame.quit()
