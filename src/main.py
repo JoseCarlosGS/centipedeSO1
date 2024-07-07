@@ -10,7 +10,7 @@ import random as rd
 
 from cola import PCB, cola
 
-#Declaracion de variables globales
+###---------------------    Declaracion de variables globales---------------------------------------
 canon = PCB()
 Q = cola()
 head = PCB()
@@ -27,6 +27,7 @@ Clwhite = (255, 255, 255)
 framesCentipede = []
 Score = 0
 Vidas = 4
+estado = ''
 
 #Tipos
 CENTIPEDE = 0
@@ -49,15 +50,17 @@ pygame.display.set_caption("Juego de Cañón Sencillo")
 
 
 # Crear un pool de objetos PCB
-pool_size = 200  # Ajustar según sea necesario
+pool_size = 600  # Ajustar según sea necesario
 pcb_pool = [PCB() for _ in range(pool_size)]
 free_pcb_indices = list(range(pool_size))
 obstaculos = [PCB() for _ in range(20)]
+lvidas = [PCB() for _ in range(Vidas)]
 
 ###-----------------------------------Carga de recursos------------------------------------------------------------##
 #Imagenes
 img_canon_org = pygame.image.load('img/cannon.png')
 img_canon = pygame.transform.scale(img_canon_org, (30, 30))
+img_vida = pygame.transform.scale(img_canon_org, (20, 20))
 
 
 #Frames de animacion
@@ -143,6 +146,24 @@ canon.Ancho = ANCHO_CANON
 canon.Color = canon_color 
 canon.Tipo = CANON
 
+# Función de pantalla inicial
+def pantalla_inicial():
+    fuente = pygame.font.Font(None, 74)
+    titulo = fuente.render("Pantalla Inicial", True, (255, 255, 255))
+    iniciar = fuente.render("Comenzar", True, (255, 255, 255))
+    rect_titulo = titulo.get_rect(center=(400, 200))
+    rect_iniciar = iniciar.get_rect(center=(400, 400))
+    return titulo, iniciar, rect_titulo, rect_iniciar
+
+# Función de pantalla de Game Over
+def pantalla_game_over():
+    fuente = pygame.font.Font(None, 74)
+    game_over = fuente.render("Game Over", True, (255, 0, 0))
+    reintentar = fuente.render("Reintentar", True, (255, 255, 255))
+    rect_game_over = game_over.get_rect(center=(400, 200))
+    rect_reintentar = reintentar.get_rect(center=(400, 400))
+    return game_over, reintentar, rect_game_over, rect_reintentar
+
 def start():
     global head, body1, body2, body3, body4
     #head del cienpies
@@ -216,10 +237,23 @@ def start():
         obstaculo.Color = Clwhite
         obstaculo.Alto = head.Alto
         obstaculo.Ancho = head.Ancho
-        obstaculo.x = rd.choice(range(30, 780 + 1, 20))
-        obstaculo.y = rd.choice(range(10, 500 + 1, 20))
+        obstaculo.x = rd.choice(range(30, 760 + 1, 20))
+        obstaculo.y = rd.choice(range(30, 500 + 1, 20))
         obstaculo.Salud = 4
         obstaculo.Tipo = OBSTACULO
+    
+    f = 0 
+    for vida in lvidas:
+        vida.Tipo = CANON
+        vida.Alto = canon.Alto
+        vida.Ancho = canon.Ancho
+        vida.x = 530 + f
+        vida.y = 0
+        vida.Color = Clwhite
+        vida.is_body = True
+        f += 20
+        
+        
 
     
 
@@ -244,12 +278,14 @@ def crear_rect(objeto):
     return pygame.Rect(objeto.x, objeto.y, objeto.Ancho, objeto.Alto)
 
 def dibujar(objeto):
-    # Detección de colisión para la bala con cualquier otro objeto
     pygame.draw.rect(pantalla, objeto.Color, (objeto.x, objeto.y, objeto.Ancho, objeto.Alto))
     # Dibujar la imagen en la pantalla
     rect_obj = crear_rect(objeto)
-    if objeto.Tipo == CANON:   
-        pantalla.blit(img_canon, rect_obj)
+    if objeto.Tipo == CANON:
+        if objeto.is_body:
+            pantalla.blit(img_vida, rect_obj)
+        else:   
+            pantalla.blit(img_canon, rect_obj)
         
     elif objeto.Tipo == OBSTACULO:
         if objeto.Salud == 4:
@@ -292,8 +328,11 @@ def cambiarDir(objeto):
     elif objeto.Dir == 1:
         objeto.Dir = 0
 
+def textvida():
+    return Vidas
+
 def moverNave(prun):
-    global Score, Vidas
+    global Score, Vidas, estado
     
     if prun.x < 0:
         cambiarDir(prun)
@@ -311,16 +350,18 @@ def moverNave(prun):
             cambiarDir(prun)
             prun.y = prun.y + prun.Alto
     
+    #detectar colision con jugador
     if rect_gus.colliderect(crear_rect(canon)):
         if Vidas > 0:
             sonido_explosion.play()
-            Vidas -= 1
-            print(Vidas)
-            for elemn in Q:
-                ele = Q.sacar()
+            Q.vaciar()
+            Vidas -= 1  
+            #lvidas.pop(0)       
             return
         else:
-            corriendo = False
+            Q.vaciar()
+            estado = 'game_over'
+            return
     
     if prun.Dir == 0:
         vel = 10
@@ -339,9 +380,16 @@ def moverNave(prun):
         nobstaculo.Tipo = OBSTACULO
         obstaculos.append(nobstaculo)
         Score += 100
-        camb = Q.sacar()
-        camb.is_body = False
-        Q.meter(camb)
+        #camb = Q.sacar()
+        i = 0
+        while i <= Q.long():
+            elem = Q.pos(i)
+            if elem.Tipo == CENTIPEDE:   
+                elem.is_body = False
+                break
+            i += 1    
+        #Q.meter(camb)
+        
         sonido_slime.play()
         
 
@@ -430,8 +478,9 @@ def planificador():
         elif PRUN.Tipo == "BALAN":
             moverBalaN(PRUN)
 
-# Bucle principal del juego
+##--------------------------------------------Bucle principal del juego----------------------------------------------
 
+estado = 'inicio'
 corriendo = True
 
 sw = True
@@ -439,45 +488,70 @@ while corriendo:
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             corriendo = False
-        elif evento.type == pygame.KEYUP:
+        elif evento.type == pygame.KEYUP and estado =='jugando':
             if evento.key == pygame.K_SPACE:
                 crearBala()
+        if estado == "inicio" and evento.type == pygame.MOUSEBUTTONDOWN:
+                if rect_iniciar.collidepoint(evento.pos):
+                    estado = "jugando"
+        elif estado == "game_over" and evento.type == pygame.MOUSEBUTTONDOWN:
+                if rect_reintentar and rect_reintentar.collidepoint(evento.pos):
+                    estado = "jugando" # Reinicia el juego
+                    Score = 0
+                    Vidas = 4
 
-    # Obtener las teclas presionadas
-    teclas = pygame.key.get_pressed()
-    if teclas[pygame.K_LEFT] and canon.x > 0:
-        canon.x -= velocidad
-    if teclas[pygame.K_RIGHT] and canon.x < ANCHO_PANTALLA - ANCHO_CANON:
-        canon.x += velocidad
-    
-    # Actualizar el texto dinámico continuamente
-    elapsed_time = int(time.time() - time.time())
-    ScoreText = f"Score: {Score} "    
-    
-    # Dibujar en la pantalla
-    pantalla.fill((0, 0, 0))  # Limpiar la pantalla con color negro
-    dibujar(canon)
-    
-    for dibujo in Q:
-        dibujar(dibujo)
-    
-    #dibujar(Q.first())
-    for obstaculo in obstaculos:
-        if obstaculo.Salud > 0:
-            dibujar(obstaculo)
-        else:
-            obstaculos.remove(obstaculo)
+    if estado == 'jugando':
+        # Obtener las teclas presionadas
+        teclas = pygame.key.get_pressed()
+        if teclas[pygame.K_LEFT] and canon.x > 0:
+            canon.x -= velocidad
+        if teclas[pygame.K_RIGHT] and canon.x < ANCHO_PANTALLA - ANCHO_CANON:
+            canon.x += velocidad
+        
+        # Actualizar el texto dinámico continuamente
+        elapsed_time = int(time.time() - time.time())
+        ScoreText = f"Score: {Score} "    
+        
+        # Dibujar en la pantalla
+        pantalla.fill((0, 0, 0))  # Limpiar la pantalla con color negro
+        dibujar(canon)
+        
+        for i in range(Vidas):
+            dibujar(lvidas[i])
+        
+        for dibujo in Q:
+            dibujar(dibujo)
+        
+        #dibujar(Q.first())
+        for obstaculo in obstaculos:
+            if obstaculo.Salud > 0:
+                dibujar(obstaculo)
+            else:
+                obstaculos.remove(obstaculo)
 
-    
-    #Ejecutar planificador
-    planificador()
-    # print(Q.last())
-    
-        # Renderizar el texto dinámico
-    texto_superficie = render_text(ScoreText, font, Clwhite)
-    texto_rect = texto_superficie.get_rect(center=(700, 10))
-    pantalla.blit(texto_superficie, texto_rect)
-    
+        
+        #Ejecutar planificador
+        planificador()
+        # print(Q.last())
+        
+            # Renderizar el texto dinámico
+        texto_superficie = render_text(ScoreText, font, Clwhite)
+        texto_rect = texto_superficie.get_rect(center=(680, 10))
+        pantalla.blit(texto_superficie, texto_rect)
+        
+    elif estado =='inicio':
+        pantalla.fill((0, 0, 0))
+        titulo, iniciar, rect_titulo, rect_iniciar = pantalla_inicial()
+        pantalla.fill((0, 0, 0))
+        pantalla.blit(titulo, rect_titulo)
+        pantalla.blit(iniciar, rect_iniciar)
+    elif estado == 'game_over':
+        pantalla.fill((0, 0, 0))
+        game_over, reintentar, rect_game_over, rect_reintentar = pantalla_game_over()
+        pantalla.blit(game_over, rect_game_over)
+        pantalla.blit(reintentar, rect_reintentar)
+        
+
     # Actualizar la pantalla
     pygame.display.flip()
 

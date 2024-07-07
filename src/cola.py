@@ -43,3 +43,21 @@ class cola:
             return resultado
         else:
             raise StopIteration
+    
+    def pos(self, index):
+        if 0 <= index < len(self.lista):
+            return self.lista[index]
+        else:
+            raise IndexError("Índice fuera de rango")
+        
+    def find_pos(self, elemento):
+        try:
+            return self.lista.index(elemento)
+        except ValueError:
+            return -1  # Devuelve -1 si el elemento no se encuentra en la lista
+    
+    def long(self):
+        return len(self.lista)
+    
+    def vaciar(self):
+        self.lista.clear() 
